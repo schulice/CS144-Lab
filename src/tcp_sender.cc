@@ -1,6 +1,7 @@
 #include "tcp_sender.hh"
 #include "tcp_config.hh"
 #include "tcp_sender_message.hh"
+#include <bit>
 #include <cstdint>
 #include <netinet/in.h>
 
@@ -103,12 +104,22 @@ void TCPSender::tick( uint64_t ms_since_last_tick, const TransmitFunction& trans
     if ( window_size_ == 0 && !is_initialized_ ) {
       transmit( make_empty_message() );
     } else if ( !outstanding_seg_.empty() ) {
-      transmit( outstanding_seg_.begin()->second );
+      resent_(transmit);
       if ( window_size_ != 0 )
         timer_.double_RTO();
       ++retransmission_time_;
+      if (this->retransmission_time_ > 3)
+        window_size_ /= 2;
     }
   };
+}
+
+void TCPSender::resent_(const TransmitFunction& transmit) {
+  for (auto i = this->outstanding_seg_.begin(); i != this->outstanding_seg_.end(); ++i) {
+    if (i->first > receive_index_ + window_size_)
+      break;
+    transmit(i->second);
+  }
 }
 
 void TCPSender::insert_buffer_( uint64_t index, TCPSenderMessage msg )
