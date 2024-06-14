@@ -74,5 +74,5 @@ private:
   bool is_initialized_ {};
   bool is_closed_ {};
   void insert_buffer_( uint64_t index, TCPSenderMessage msg );
-  void resent_(const TransmitFunction& transmit);
+  void resent_( const TransmitFunction& transmit );
 };

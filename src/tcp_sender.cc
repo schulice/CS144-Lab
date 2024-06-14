@@ -78,13 +78,13 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
   const auto ackno_abs = msg.ackno->unwrap( isn_, receive_index_ );
   if ( ackno_abs > receive_index_ && send_index_ >= ackno_abs ) {
     auto i = outstanding_seg_.begin();
-    for ( ; i != outstanding_seg_.end(); i ++) {
+    for ( ; i != outstanding_seg_.end(); i++ ) {
       if ( ackno_abs < i->first + i->second.sequence_length() )
         break;
     }
-    if ( i != outstanding_seg_.end() && ackno_abs != i->first)
+    if ( i != outstanding_seg_.end() && ackno_abs != i->first )
       return;
-    outstanding_seg_.erase(outstanding_seg_.begin(), i);
+    outstanding_seg_.erase( outstanding_seg_.begin(), i );
     receive_index_ = ackno_abs;
     retransmission_time_ = 0;
     if ( sequence_numbers_in_flight() == 0 ) {
@@ -104,21 +104,22 @@ void TCPSender::tick( uint64_t ms_since_last_tick, const TransmitFunction& trans
     if ( window_size_ == 0 && !is_initialized_ ) {
       transmit( make_empty_message() );
     } else if ( !outstanding_seg_.empty() ) {
-      resent_(transmit);
+      resent_( transmit );
       if ( window_size_ != 0 )
         timer_.double_RTO();
       ++retransmission_time_;
-      if (this->retransmission_time_ > 3)
+      if ( this->retransmission_time_ > 3 )
         window_size_ /= 2;
     }
   };
 }
 
-void TCPSender::resent_(const TransmitFunction& transmit) {
-  for (auto i = this->outstanding_seg_.begin(); i != this->outstanding_seg_.end(); ++i) {
-    if (i->first > receive_index_ + window_size_)
+void TCPSender::resent_( const TransmitFunction& transmit )
+{
+  for ( auto i = this->outstanding_seg_.begin(); i != this->outstanding_seg_.end(); ++i ) {
+    if ( i->first > receive_index_ + window_size_ )
       break;
-    transmit(i->second);
+    transmit( i->second );
   }
 }
 
